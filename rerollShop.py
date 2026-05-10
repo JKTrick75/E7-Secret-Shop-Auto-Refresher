@@ -218,7 +218,13 @@ def scroll_down():
     # Ejecución del scroll (Configurado actualmente para LDPlayer con la rueda del ratón)
     win32api.SetCursorPos((scroll_pt_x, scroll_pt_y))
     time.sleep(random.uniform(0.2, 0.4))
-    mouse.wheel(-8) # Gira la rueda hacia abajo
+
+    # Acción scroll (comentar/descomentar según emulador usado)
+    # --- LDPLAYER ---
+    mouse.wheel(-4)
+    # --- BLUE STACKS ---
+    # pyautogui.scroll(-1, x=scroll_pt_x, y=scroll_pt_y)
+
     time.sleep(random.uniform(0.6, 0.7))
 
 def refresh():
@@ -335,7 +341,7 @@ def macro():
                 
                 # 2. Desplazarse hacia abajo (Scroll)
                 scroll_down()
-                time.sleep(0.5)
+                time.sleep(0.8)
                 
                 # 3. Comprobar fila inferior post-scroll
                 chk_cove()
