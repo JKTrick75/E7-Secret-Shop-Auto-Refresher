@@ -1,6 +1,6 @@
 # E7 Macro Reroll Shop
 
-Este código es una versión modificada del proyecto original *E7-Secret-Shop-Auto-Refresher* de *dengpris*. Y posteriormente modificada por *Shirope*.
+Este código es una versión modificada del proyecto original *E7-Secret-Shop-Auto-Refresher* de *dengpris*. Posteriormente modificada por *Shirope* y *Ruly*.
 Se ha adaptado para que funcione en la versión actual (Mayo de 2026) y se ha añadido una interfaz visual.
 
 ## Dependencias a instalar
