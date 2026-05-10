@@ -140,46 +140,47 @@ def buy(bookmark):
         medalla_img = 'my_images/mystic.png'
         buy_button = 'my_images/Buy_button_Mystic.png'
 
-    # Imagen del botón pequeño de "Comprar" que sale en la lista junto al ítem (Cuesta oro)
-    buy_list_button = 'my_images/buy_list_button.png'
-
     pos = None
     buy_start = time.time()
 
     # PASO 1: Buscar la imagen de la medalla en la pantalla
-    # confidence=0.8 requiere un 80% de similitud, tolerando ligeros cambios de brillo.
     while pos is None and time.time() < (buy_start + timeout):
         pos = pyautogui.locateOnScreen(medalla_img, confidence=0.8)
 
     if pos is not None and not stop_flag:
-        # PASO 2: Buscar el botón pequeño de comprar, pero SOLO a la derecha de la medalla.
-        # En lugar de usar medidas fijas (que fallan al cambiar de monitor), definimos una 
-        # "región" de búsqueda visual que empieza donde se encontró la medalla y termina en el borde derecho.
-        region_busqueda = (int(pos.left), int(pos.top - 20), int(width - pos.left), int(pos.height + 40))
-        btn_pos = pyautogui.locateOnScreen(buy_list_button, confidence=0.7, region=region_busqueda)
+        pos_center = pyautogui.center(pos)
         
-        if btn_pos is not None:
-            btn_center = pyautogui.center(btn_pos)
-            click(btn_center.x, btn_center.y) # Clic en el botón pequeño de la lista
-            time.sleep(random.uniform(0.4, 0.6)) # Esperar a que emerja la ventana de confirmación central
+        # ==============================================================================
+        # MECÁNICA RECUPERADA: DESPLAZARSE A LA DERECHA Y PULSAR
+        # ==============================================================================
+        # Calculamos la coordenada X usando el 87% del ancho de tu pantalla (como estaba 
+        # en tu última versión). La coordenada Y será la altura de la medalla + 35 píxeles 
+        # hacia abajo para centrar el clic en el botón.
+        # SI HACE CLIC EN EL AIRE, AJUSTA ESTOS DOS VALORES:
+        
+        clic_x = int(width * 0.87)             # Ajusta el 0.87 si se queda corto o se pasa
+        clic_y = int(pos_center.y + 35)        # Ajusta el +35 si hace clic muy arriba o abajo
+        
+        click(clic_x, clic_y)
+        time.sleep(random.uniform(0.4, 0.6)) # Esperar a que emerja el popup central
+        
+        # PASO 2: Buscar el botón grande azul de confirmación final en el popup emergente
+        timeout_start = time.time()
+        buy_button_pos = None
 
-            # PASO 3: Buscar el botón grande azul de confirmación final
-            timeout_start = time.time()
-            buy_button_pos = None
+        while time.time() < (timeout_start + timeout):
+            if pause_flag:
+                time.sleep(0.1)
+                continue
+            buy_button_pos = pyautogui.locateOnScreen(buy_button, confidence=0.6)
 
-            while time.time() < (timeout_start + timeout):
-                if pause_flag:
-                    time.sleep(0.1)
-                    continue
-                buy_button_pos = pyautogui.locateOnScreen(buy_button, confidence=0.6)
+            if buy_button_pos is not None:
+                buy_button_center = pyautogui.center(buy_button_pos)
+                click(buy_button_center.x, buy_button_center.y) # Compra confirmada
+                medalla_count += 1
+                break
 
-                if buy_button_pos is not None:
-                    buy_button_center = pyautogui.center(buy_button_pos)
-                    click(buy_button_center.x, buy_button_center.y) # Compra confirmada
-                    medalla_count += 1
-                    break
-
-    # Registrar qué se ha comprado para evitar repetir en el mismo escaneo
+    # Registrar qué se ha comprado
     if medalla_count > 0:
         if bookmark == 'covenant':
             covenant_count += medalla_count
