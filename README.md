@@ -1,32 +1,25 @@
-# E7 Secret Shop Auto Refresh Macro
+# E7 Macro Reroll Shop
 
-**Please note this script is no longer being maintained.**
+Este código es una versión modificada del proyecto original *E7-Secret-Shop-Auto-Refresher* de *dengpris*. Y posteriormente modificada por *Shirope*.
+Se ha adaptado para que funcione en la versión actual (Mayo de 2026) y se ha añadido una interfaz visual.
 
-This macro helps the user refresh the Secret Shop and buy Covenant and Mystic bookmarks. The mouse clicks and delay intervals are randomized to avoid Epic Seven detecting the use of third-party software. 
+## Dependencias a instalar
 
-This code is heavily referenced from Epic_Scripted's [E7-Auto-Shop-Refresh-Custom](https://github.com/EpicScipted/E7-Auto-Shop-Refresh-Custom), as well as the [original script](https://github.com/EmaOlay/E7-Auto-Shop-Refresh) is made by EmaOlay.
+Si ya tienes instalado *fribbels-optimizer*, puedes saltarte el paso de instalar Python.
 
-![](https://media.giphy.com/media/NSAX9N2SyPUVrih2E0/giphy-downsized-large.gif)
+* Instala Python (`https://www.python.org/downloads/`)
+* Instala Pip (`https://pip.pypa.io/en/stable/installation/`)
+* Ejecuta `install.bat`
 
-## How to Run:
-1. Make sure you have [Python](https://www.python.org/downloads/) and the correct dependencies installed (see below)
-2. Set your resolution to 1920x1080. This macro will not work for other resolutions
-3. Open and maximize Bluestacks
-4. Open Epic Seven, then enter Secret Shop
-5. Run the Python script
-	>If running from terminal, make sure the refresh button is visible on the screen
-6. If running the script for the first time, make sure everything works correctly first
-	>If the macro is not recognizing the images properly, you will need to replace the images in the folder with your own screenshots
-7. To exit the script, hold 'q' until the macro stops working completely
-    > Script will exit after confirming refresh. Set 'debug_timer' greater than 0 to exit before refresh.
+## Cómo utilizar el script
 
-## Dependencies to Install
-Use the package manager [pip](https://pip.pypa.io/en/stable/installation/) to install the following dependencies:
-```
-pip install keyboard
-pip install opencv-python
-pip install pyautogui
-pip install mouse
-pip install pillow
-pip install pywin32
-```
+1. Asegúrate de que el emulador esté en modo de pantalla completa.
+2. Captura imágenes/recortes de cada una de las imágenes que se encuentran en la carpeta `/my\_images`.
+3. Reemplaza las imágenes capturadas con las correspondientes en tu emulador. Asegúrate de que los nombres de archivo sean idénticos.
+4. Ejecuta `run.bat` como *ADMINISTRADOR*.
+5. Introduce la cantidad de minutos que deseas que se ejecute la macro sin pausa.
+
+Es posible que el código requiera ajustes en los píxeles según el emulador/resolución utilizados.
+
+**Para detener la ejecución, pulsa ESC.**
+
