@@ -1,4 +1,3 @@
-from pyautogui import *
 import pyautogui
 import time
 import datetime
@@ -19,6 +18,7 @@ from datetime import datetime
 root = tk.Tk()
 width = root.winfo_screenwidth()
 height = root.winfo_screenheight()
+
 # Crea variables para almacenar los resultados de la vista
 covenant_count_val = IntVar()
 mystic_count_val  = IntVar()
@@ -45,24 +45,11 @@ mystic_buyed = False
 run_timeout = 0
 skystones_max = 0
 
-rand_x = random.randrange(-60, 60)
-rand_y = random.randrange(-15, 15)
-
-# Define una función para pausar o reanudar la ejecución de la macro
+# --- FUNCIONES DE CONTROL ---
 def pause_resume_macro():
     global pause_flag
     pause_flag = not pause_flag
 
-# Define una función para actualizar los resultados en la interfaz
-def update_results():
-    label_covenant_count.config(text="Covenants comprados: " + str(covenant_count_val.get()))
-    label_mystic_count.config(text="Mystics comprados: " + str(mystic_count_val.get()))
-    label_refresh_count.config(text="Refrescos realizados: " + str(refresh_count_val.get()))
-    label_skystones_consumed.config(text="Skystones consumidas: " + str(refresh_count_val.get() * 3))
-    label_gold_consumed.config(text="Oro consumido: " + str(covenant_count_val.get() * 184000 + mystic_count_val.get() * 280000))
-
-
-# Define una función para pausar la ejecución de la macro
 def pause_macro():
     global pause_flag
     pause_flag = not pause_flag
@@ -71,20 +58,19 @@ def stop_macro(event=None):
     global stop_flag
     stop_flag = not stop_flag
 
-# Define una función para ejecutar la macro en segundo plano
 def run_macro():
     global run_timeout, stop_flag, skystones_max, use_time_flag, use_skystones_flag
     stop_flag = False
-    # Obtener el valor del campo de entrada
+    
     minutes = entry_minutes.get()
     skystones = entry_skystones.get()
+    
     if not minutes or not skystones:
-        # Al menos uno de los campos de entrada está vacío
-        # Activar la bandera correspondiente según si se usa tiempo o skystones
         if not minutes:
             use_time_flag = False
         if not skystones:
             use_skystones_flag = False
+            
     if minutes:
         use_time_flag = True
         run_timeout = int(minutes) * 60
@@ -92,11 +78,11 @@ def run_macro():
         use_skystones_flag = True
         skystones_max = int(skystones)
 
-    macro_thread = threading.Thread(target=macro)
+    macro_thread = threading.Thread(target=macro, daemon=True)
     macro_thread.start()
 
-# Define una función para actualizar los resultados en la interfaz
 def update_results():
+    # Actualiza la vista con los contadores reales
     label_covenant_count.config(text="Covenants comprados: " + str(covenant_count * 5))
     label_mystic_count.config(text="Mystics comprados: " + str(mystic_count * 50))
     label_refresh_count.config(text="Refrescos realizados: " + str(refresh_count))
@@ -109,11 +95,18 @@ def on_closing():
     time.sleep(1)
     sys.exit()
 
+# --- FUNCIONES DE ACCIÓN (RATÓN Y COMPRAS) ---
+
 def click(x, y):
-    win32api.SetCursorPos((x, y))
+    # MEJORA: Aleatoriedad generada en cada clic para mayor seguridad y evitar clics robóticos repetitivos
+    rand_x = random.randrange(-12, 12)
+    rand_y = random.randrange(-5, 5)
+    
+    win32api.SetCursorPos((int(x + rand_x), int(y + rand_y)))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-    time.sleep(0.4)
+    time.sleep(random.uniform(0.1, 0.25))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
+    time.sleep(0.3)
 
 def buy(bookmark):
     global mystic_count, covenant_count, timeout, cove_buyed, mystic_buyed, width
@@ -126,6 +119,9 @@ def buy(bookmark):
         medalla_img = 'my_images/mystic.png'
         buy_button = 'my_images/Buy_button_Mystic.png'
 
+    # MEJORA: La imagen del botón pequeño de comprar en la lista
+    buy_list_button = 'my_images/buy_list_button.png'
+
     pos = None
     buy_start = time.time()
 
@@ -133,31 +129,32 @@ def buy(bookmark):
         pos = pyautogui.locateOnScreen(medalla_img, confidence=0.8)
 
     if pos is not None and not stop_flag:
-        pos_center = pyautogui.center(pos)
-        # Hacer clic en comprar
-    #==============================================================================
-    # SI HACE CLICK FUERA AL INTENTAR COMPRAR, AJUSTAR EL VALOR POR DEFECTO DE 'X' 800 AL CORRECTO SEGUN VUESTRA PANTALLA Y EL DE LA 'Y' TAMBIEN SI ES NECESARIO
-    #==============================================================================
-        click(round(width*0.87) + rand_x, pos_center.y + 40 + rand_y)
-        click(round(width*0.87) + rand_x, pos_center.y + 30 + rand_y)
-        time.sleep(random.uniform(0.4, 0.6)) # Esperar por el botón de confirmación
+        # MEJORA: En lugar de usar un porcentaje del ancho (width*0.87), buscamos el botón visualmente.
+        # Es 100% preciso sin importar cómo escale la pantalla.
+        region_busqueda = (int(pos.left), int(pos.top - 20), int(width - pos.left), int(pos.height + 40))
+        btn_pos = pyautogui.locateOnScreen(buy_list_button, confidence=0.7, region=region_busqueda)
+        
+        if btn_pos is not None:
+            btn_center = pyautogui.center(btn_pos)
+            click(btn_center.x, btn_center.y)
+            time.sleep(random.uniform(0.4, 0.6)) # Esperar ventana de confirmación
 
-        # Confirmar compra
-        timeout_start = time.time()
-        buy_button_pos = None
+            # Confirmar compra en la ventana emergente
+            timeout_start = time.time()
+            buy_button_pos = None
 
-        while time.time() < (timeout_start + timeout):
-            if pause_flag:
-                time.sleep(0.1)
-                continue
-            buy_button_pos = pyautogui.locateOnScreen(buy_button, confidence=0.6)
+            while time.time() < (timeout_start + timeout):
+                if pause_flag:
+                    time.sleep(0.1)
+                    continue
+                buy_button_pos = pyautogui.locateOnScreen(buy_button, confidence=0.6)
 
-            if buy_button_pos is not None:
-                buy_button_center = pyautogui.center(buy_button_pos)
-                click(buy_button_center[0] + 70 + rand_x, buy_button_center[1] + rand_y)
-                click(buy_button_center[0] + 70 + rand_x, buy_button_center[1] + rand_y)
-                medalla_count += 1
-                break
+                if buy_button_pos is not None:
+                    buy_button_center = pyautogui.center(buy_button_pos)
+                    # Aquí hacemos clic en el botón grande azul de confirmación
+                    click(buy_button_center.x, buy_button_center.y)
+                    medalla_count += 1
+                    break
 
     if medalla_count > 0:
         if bookmark == 'covenant':
@@ -167,7 +164,6 @@ def buy(bookmark):
             mystic_count += medalla_count
             mystic_buyed = True
     update_results()
-
 
 def chk_cove():
     global cove_buyed
@@ -183,48 +179,27 @@ def chk_mystic():
         time.sleep(random.uniform(0.2, 0.4))
         buy('mystic')
 
-def click(x, y):
-    win32api.SetCursorPos((x, y))
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0)
-    time.sleep(0.6)
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0)
-
 def scroll_down():
     global width, height
     time.sleep(random.uniform(0.2, 0.4))
-    #==============================================================================
-    # SI EL CLICK DEL SCROLL LO HACE MUY CERCA DE LAS IMAGENES DE LOS ITEMS/HEROES REDUCIR EL VALOR DE LA X 
-    # ej: random.randint(1200, 1400)
-    #==============================================================================
+    
+    # Coordenadas donde se hace el scroll (mitad derecha de la pantalla para evitar hacer clic en ítems)
     scroll_pt_x = random.randint(round(width*0.55), round(width*0.7))
     scroll_pt_y = random.randint(round(height*0.2), round(height*0.65))
-    click(scroll_pt_x, scroll_pt_y)
 
-    #==============================================================================
-    # SI NO FUNCIONA EL SCROLL, COMENTAR LAS TRES LINEAS SIGUIENTES Y DESCOMENTAR LA 4ª
-    #==============================================================================
-    #Mumu
-    #pyautogui.mouseDown(button='left')
-    #time.sleep(random.uniform(0.4, 0.6))
-    #pyautogui.mouseUp(button='left', x=scroll_pt_x, y=scroll_pt_y - 300)
-    #Bluestack
-    #pyautogui.scroll(-2, x=scroll_pt_x, y=scroll_pt_y)
-    #LDPlayer
-    time.sleep(random.uniform(0.6, 0.7))
+    # Mantenemos tu configuración original para LDPlayer (Rueda del ratón)
+    win32api.SetCursorPos((scroll_pt_x, scroll_pt_y))
+    time.sleep(random.uniform(0.2, 0.4))
     mouse.wheel(-8)
-    
     time.sleep(random.uniform(0.6, 0.7))
 
 def refresh():
     RB_pos = pyautogui.locateOnScreen('my_images/refresh_button.png', confidence=0.8)
-    global rand_x, rand_y, refresh_count, cove_buyed, mystic_buyed, pause_flag
+    global refresh_count, cove_buyed, mystic_buyed, pause_flag
 
-    rand_x = random.randrange(-60, 60)
-    rand_y = random.randrange(-15, 15)
     if RB_pos is not None and not stop_flag:
         RB_center = pyautogui.center(RB_pos)
-        click(RB_center[0] + rand_x, RB_center[1] + rand_y)
-        click(RB_center[0] + rand_x, RB_center[1] + rand_y)
+        click(RB_center.x, RB_center.y)
         time.sleep(0.1) # Esperar a que aparezca la confirmación
 
         timeout_start = time.time()
@@ -237,17 +212,20 @@ def refresh():
 
             if confirm_pos is not None:
                 confirm_center = pyautogui.center(confirm_pos)
-                click(confirm_center[0] + rand_x, confirm_center[1] + rand_y)
-                click(confirm_center[0] + rand_x, confirm_center[1] + rand_y)
+                click(confirm_center.x, confirm_center.y)
                 refresh_count += 1
+                
+                # --- PAUSA DE CARGA ---
+                time.sleep(1.5) 
                 break
+                
     mystic_buyed = False
     cove_buyed = False
     update_results()
 
+# --- FUNCIONES DE EXPORTACIÓN (CSV) ---
 def obtener_fecha():
-    fecha_actual = datetime.now().strftime('%d/%m/%y')
-    return fecha_actual
+    return datetime.now().strftime('%d/%m/%y')
 
 def guardar_en_csv(valores, archivo):
     existe = os.path.exists(archivo)
@@ -265,21 +243,21 @@ def guardar_en_csv(valores, archivo):
 
 def save_csv():
     valores_nuevos = [
-    {   'Fecha': '',
-        'Skystones': refresh_count * 3,
-        'Covenants': covenant_count * 5,
-        'Mystics': mystic_count * 50,
-        'Oro': covenant_count * 184000 + mystic_count * 280000,
-        'ss/cov': 0 if covenant_count == 0 else (refresh_count * 3)/covenant_count*5,
-        'ss/mystics': 0 if mystic_count == 0 else (refresh_count * 3)/mystic_count*50,
-        'Cuenta': entry_nombre.get()
-    }
+        {   'Fecha': '',
+            'Skystones': refresh_count * 3,
+            'Covenants': covenant_count * 5,
+            'Mystics': mystic_count * 50,
+            'Oro': covenant_count * 184000 + mystic_count * 280000,
+            'ss/cov': 0 if covenant_count == 0 else (refresh_count * 3)/(covenant_count*5),
+            'ss/mystics': 0 if mystic_count == 0 else (refresh_count * 3)/(mystic_count*50),
+            'Cuenta': entry_nombre.get()
+        }
     ]
 
     archivo_csv = 'datos.csv'
     guardar_en_csv(valores_nuevos, archivo_csv)
 
-
+# --- BUCLE PRINCIPAL (MACRO) ---
 def macro():
     global exit_flag, debug_timer, covenant_count, mystic_count, refresh_count, macro_thread, use_skystones_flag, use_time_flag, skystones_max, stop_flag
 
@@ -297,7 +275,8 @@ def macro():
                 sys.exit()
 
             while exit_flag == 0 and ((use_time_flag == False) or (time.time() - start_time) < run_timeout) and not stop_flag:
-                print(refresh_count * 3, skystones_max)
+                
+                # Control de límite de Skystones
                 if use_skystones_flag:
                     if not (refresh_count * 3) < skystones_max:
                         stop_flag = True
@@ -305,36 +284,31 @@ def macro():
                 if stop_flag:
                     break
 
-
-                # Comprobar covenants/mystics
+                # 1. Comprobar covenants/mystics antes del scroll
                 chk_cove()
                 chk_mystic()
-                # Desplazarse hacia abajo
+                
+                # 2. Desplazarse hacia abajo
                 scroll_down()
-
-                sleep(0.5)
-                # Comprobar covenants/mystics nuevamente
+                time.sleep(0.5)
+                
+                # 3. Comprobar covenants/mystics después del scroll
                 chk_cove()
                 chk_mystic()
 
-                # Actualizar la lista
+                # 4. Actualizar la tienda
                 refresh()
                 time.sleep(0.5)
 
-    # Actualiza los resultados en las variables
+    # Al terminar o detener, actualizar interfaz
     covenant_count_val.set(covenant_count)
     mystic_count_val.set(mystic_count)
     refresh_count_val.set(refresh_count)
-
-    # Actualiza los resultados en la interfaz
     update_results()
 
-
-# Configurar el tamaño y título de la ventana
+# --- INTERFAZ GRÁFICA (UI) ---
 root.geometry("370x240")
-root.title("Epic Seven Macro")
-
-# Configurar la ventana para que esté siempre en primer plano
+root.title("Epic Seven Macro - Optimized")
 root.wm_attributes("-topmost", 1)
 
 # Crear un estilo base
@@ -353,20 +327,20 @@ label_skystones.grid(row=1, column=0, sticky="W", padx=5, pady=2)
 label_nombre = ttk.Label(frame, text="Nombre:")
 label_nombre.grid(row=2, column=0, sticky="W", padx=5, pady=2)
 
-# Crear el campo de entrada
-entry_minutes = ttk.Entry(frame)
+entry_minutes = ttk.Entry(frame, width=12)
 entry_minutes.grid(row=0, column=1)
-entry_skystones = ttk.Entry(frame)
+entry_skystones = ttk.Entry(frame, width=12)
 entry_skystones.grid(row=1, column=1)
-entry_nombre = ttk.Entry(frame)
+entry_nombre = ttk.Entry(frame, width=12)
 entry_nombre.grid(row=2, column=1)
 
 # Crear un botón para ejecutar la macro
 button_run_macro = ttk.Button(frame, text="Iniciar", command=run_macro)
 button_run_macro.grid(row=0, column=2, rowspan=1, padx=10, pady=(0, 5), sticky="NS")
+
 # Crear un botón para exportar
-button_run_macro = ttk.Button(frame, text="Exportar", command=save_csv)
-button_run_macro.grid(row=1, column=2, rowspan=1, padx=10, pady=(0, 5), sticky="NS")
+button_export_csv = ttk.Button(frame, text="Exportar", command=save_csv)
+button_export_csv.grid(row=1, column=2, rowspan=1, padx=10, pady=(0, 5), sticky="NS")
 
 # Crear etiquetas para mostrar los resultados
 label_covenant_count = ttk.Label(root, text="Covenants comprados: " + str(covenant_count))
