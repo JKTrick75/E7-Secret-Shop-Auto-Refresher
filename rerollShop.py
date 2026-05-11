@@ -252,7 +252,6 @@ def refresh():
                 
                 # --- PAUSA CRÍTICA DE CARGA ---
                 # Espera 1.5s para dar tiempo al juego a terminar la animación de la nueva tienda.
-                # Sin esto, el bot lee la pantalla mientras se mueve y se salta ítems.
                 time.sleep(1.5) 
                 break
                 
